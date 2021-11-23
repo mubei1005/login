@@ -8,30 +8,9 @@ var path = require('path');
 var bs = require('browser-sync').create();
 var ROOT = path.resolve(__dirname);
 var server = path.resolve(ROOT, 'server');
-// browser-sync配置，配置里启动nodemon任务
-gulp.task('browser-sync', ['nodemon'], function() {
-    bs.init(null, {
-        // 默认起的是3000端口
-        proxy: "http://localhost:8080/index.html",
-        port: 4000
-    });
-});
-// browser-sync 监听文件
-gulp.task('server', ['browser-sync'], function() {
-    gulp.watch(['./server.js', './server/**', './server-token/**'], ['bs-delay']);
-});
-
-
-// 延时刷新
-gulp.task('bs-delay', function() {
-    setTimeout(function() {
-        bs.reload();
-        console.log('重启完毕!');
-    }, 2000);
-});
 
 // 服务器重启
-gulp.task('nodemon', function(cb) {
+gulp.task('nodemon', gulp.series(function(cb) {
     // 设个变量来防止重复重启
     var started = false;
     nodemon({
@@ -51,4 +30,26 @@ gulp.task('nodemon', function(cb) {
             started = true;
         }
     })
-});
+}));
+
+// browser-sync配置，配置里启动nodemon任务
+gulp.task('browser-sync', gulp.series('nodemon', function() {
+    bs.init(null, {
+        // 默认起的是3000端口
+        proxy: "http://localhost:8080/index.html",
+        port: 4000
+    });
+}));
+// browser-sync 监听文件
+gulp.task('server', gulp.series('browser-sync', function() {
+    gulp.watch(['./server.js', './server/**', './server-token/**'], ['bs-delay']);
+}));
+
+
+// 延时刷新
+gulp.task('bs-delay', gulp.series(function() {
+    setTimeout(function() {
+        bs.reload();
+        console.log('重启完毕!');
+    }, 2000);
+}));
